@@ -46,7 +46,6 @@ let
     dbus
     at-spi2-core
     cups
-
     fontconfig
   ];
 in pkgs.mkShell {
