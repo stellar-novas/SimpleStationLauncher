@@ -286,6 +286,10 @@ public sealed class DataManager : ReactiveObject
                 Set((long) v != 0);
             else if (entry.Type == typeof(int))
                 Set((int)(long) v);
+            else if (entry.Type == typeof(double))
+                Set((double) v);
+            else
+                throw new NotImplementedException("Unknown CVar type.");
 
             void Set<T>(T value) => ((CVarEntry<T>)entry).ValueInternal = value;
         }

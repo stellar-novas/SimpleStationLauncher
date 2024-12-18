@@ -88,6 +88,13 @@ public static class CVars
     /// </summary>
     public static readonly CVarDef<int> MaxForkVersionsToKeep = CVarDef.Create("MaxForkVersionsToKeep", 3);
 
+    public static readonly CVarDef<double> UiScalingX = CVarDef.Create("UiScalingX", 1.0);
+    public static readonly CVarDef<double> UiScalingY = CVarDef.Create("UiScalingY", 1.0);
+    /// <summary>
+    /// Whether the UI scaling options should always be the same as each other.
+    /// </summary>
+    public static readonly CVarDef<bool> UiScalingLock = CVarDef.Create("UiScalingLock", true);
+
     /// <summary>
     /// Whether to display override assets (trans rights).
     /// </summary>
