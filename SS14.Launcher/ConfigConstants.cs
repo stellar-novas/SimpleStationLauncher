@@ -27,7 +27,13 @@ public static class ConfigConstants
     public const int LauncherCommandsRedialWaitTimeout = 1000;
 
     public static readonly string AuthUrl = "https://auth.spacestation14.com/";
-    public static readonly Uri[] DefaultHubUrls = { new("https://hub.spacestation14.com/") };
+    public static readonly Uri[] DefaultHubUrls =
+    {
+        new("https://cdn.spacestationmultiverse.com/hub/"),
+        new("https://web.networkgamez.com/"),
+        new("https://hub.singularity14.co.uk/"),
+        new("https://hub.spacestation14.com/"),
+    };
     public const string DiscordUrl = "https://discord.gg/49KeKwXc8g/";
     public const string AccountBaseUrl = "https://account.spacestation14.com/Identity/Account/";
     public const string AccountManagementUrl = $"{AccountBaseUrl}Manage";

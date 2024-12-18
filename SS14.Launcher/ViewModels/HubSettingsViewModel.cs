@@ -48,16 +48,23 @@ public class HubSettingsViewModel : ViewModelBase
         HubList.Add(new HubViewModel("", this));
     }
 
-    private void Reset()
+    public void Reset()
     {
         HubList.Clear();
+        HubList.AddRange(DefaultHubs.Select(h => new HubViewModel(h.AbsoluteUri, this)));
+    }
+
+    public void HardReset()
+    {
+        _dataManager.SetHubs(DefaultHubs.Select(h => new Hub(new Uri(h.OriginalString), 0)).ToList());
+        Reset();
     }
 
     public List<string> GetDupes()
     {
-        return DefaultHubs
-            .Select(h => h.AbsoluteUri)
-            .Concat(HubList.Select(h => NormalizeHubUri(h.Address))).GroupBy(h => h)
+        return HubList
+            .Select(h => NormalizeHubUri(h.Address))
+            .GroupBy(h => h)
             .Where(group => group.Count() > 1)
             .Select(x => x.Key)
             .ToList();
@@ -86,43 +93,35 @@ public class HubSettingsViewModel : ViewModelBase
     }
 }
 
-public class HubViewModel : ViewModelBase
+public class HubViewModel(string address, HubSettingsViewModel parentVm, bool canRemove = true) : ViewModelBase
 {
-    public string Address { get; set; }
-    private readonly HubSettingsViewModel _parentVm;
-    private bool IsNotDefault { get; }
-
-    public HubViewModel(string address, HubSettingsViewModel parentVm, bool isNotDefault = true)
-    {
-        Address = address;
-        _parentVm = parentVm;
-        IsNotDefault = isNotDefault;
-    }
+    public string Address { get; set; } = address;
+    private bool CanRemove { get; } = canRemove;
 
     public void Remove()
     {
-        _parentVm.HubList.Remove(this);
+        parentVm.HubList.Remove(this);
     }
 
     public void Up()
     {
-        var i = _parentVm.HubList.IndexOf(this);
+        var i = parentVm.HubList.IndexOf(this);
 
         if (i == 0)
             return;
 
-        _parentVm.HubList[i] = _parentVm.HubList[i - 1];
-        _parentVm.HubList[i - 1] = this;
+        parentVm.HubList[i] = parentVm.HubList[i - 1];
+        parentVm.HubList[i - 1] = this;
     }
 
     public void Down()
     {
-        var i = _parentVm.HubList.IndexOf(this);
+        var i = parentVm.HubList.IndexOf(this);
 
-        if (i == _parentVm.HubList.Count - 1)
+        if (i == parentVm.HubList.Count - 1)
             return;
 
-        _parentVm.HubList[i] = _parentVm.HubList[i + 1];
-        _parentVm.HubList[i + 1] = this;
+        parentVm.HubList[i] = parentVm.HubList[i + 1];
+        parentVm.HubList[i + 1] = this;
     }
 }
