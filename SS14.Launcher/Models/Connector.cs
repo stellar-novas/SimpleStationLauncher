@@ -620,7 +620,7 @@ public class Connector : ReactiveObject
         {
             if (release)
             {
-                var appPath = Path.Combine(basePath, "Space Station 14.app");
+                var appPath = Path.Combine(basePath, "SimpleStation14.app");
                 Log.Debug("Using app bundle: {appPath}", appPath);
 
                 Log.Debug("Clearing quarantine on loader.");

@@ -152,7 +152,7 @@ login-confirmation-button-cancel = Annuler
 # Strings for the "register confirmation" view on login
 login-confirmation-busy = Connexion…
 # Strings for the general main window layout of the launcher
-main-window-title = Launcher de Space Station 14
+main-window-title = Launcher de SimpleStation14
 # Strings for the general main window layout of the launcher
 main-window-header-link-discord = Discord
 # Strings for the general main window layout of the launcher

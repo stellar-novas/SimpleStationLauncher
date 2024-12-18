@@ -29,7 +29,7 @@ internal class Program
         var prefix = "";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            prefix = "Space Station 14.app/Contents/Resources/";
+            prefix = "SimpleStation14.app/Contents/Resources/";
         }
 
         _fileApi = new ZipFileApi(zipArchive, prefix);

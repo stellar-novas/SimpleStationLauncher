@@ -63,14 +63,6 @@
     </DockPanel>
     <ScrollViewer DockPanel.Dock="Top">
       <StackPanel Spacing="2">
-        <TextBlock DockPanel.Dock="Left" Text="{loc:Loc hub-settings-heading-default}" Classes="NanoHeadingSmall" />
-        <ItemsControl ItemsSource="{Binding DefaultHubs}" Classes="Spaced">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <TextBox Text="{Binding}" IsEnabled="False" />
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
         <TextBlock DockPanel.Dock="Left" Text="{loc:Loc hub-settings-heading-custom}" Classes="NanoHeadingSmall" />
         <ItemsControl ItemsSource="{Binding HubList}" Name="Hubs" Classes="Spaced">
           <ItemsControl.ItemTemplate>
