@@ -15,7 +15,6 @@
           (system: function (import nixpkgs { inherit system; }));
     in
     {
-
       packages = forAllSystems (pkgs: {
         default = self.packages.${pkgs.system}.space-station-14-launcher;
         space-station-14-launcher =
@@ -45,6 +44,5 @@
         });
 
       formatter = forAllSystems (pkgs: pkgs.nixpkgs-fmt);
-
     };
 }
