@@ -47,11 +47,9 @@ public sealed partial class MainWindowContent : UserControl
 
     public void UpdateScale(double x, double y, bool yx)
     {
-        Console.WriteLine($"Scaling UI to {x}x{y} (lock: {yx})");
         // Get the main window
         if (VisualRoot is not Window window)
             return;
-        Console.WriteLine($"Window size: {window.Width}x{window.Height}");
 
         // Shrink UI to a normal size
         if (TransformControl.LayoutTransform is ScaleTransform old)
