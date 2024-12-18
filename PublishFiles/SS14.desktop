@@ -4,4 +4,4 @@ Encoding=UTF-8
 Version=1.0
 Type=Application
 Exec=env ./SS14.Launcher %u
-Name=Space Station 14
+Name=SimpleStation14 Launcher

@@ -1,4 +1,4 @@
-main-window-title = Space Station 14 ランチャー
+main-window-title = SimpleStation14 ランチャー
 main-window-out-of-date-desc-steam =
     このランチャーは古いものです。
     Steamによるアップデートを許可してください。

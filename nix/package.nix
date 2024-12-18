@@ -122,7 +122,7 @@ buildDotnetModule rec {
       name = pname;
       exec = meta.mainProgram;
       icon = pname;
-      desktopName = "Space Station 14 Launcher";
+      desktopName = "SimpleStation14 Launcher";
       comment = meta.description;
       categories = [ "Game" ];
       startupWMClass = meta.mainProgram;
@@ -143,8 +143,8 @@ buildDotnetModule rec {
   '';
 
   meta = with lib; {
-    description = "Launcher for Space Station 14, a multiplayer game about paranoia and disaster";
-    homepage = "https://spacestation14.io";
+    description = "Launcher for Simple Station 14, a 2D RPG about disasters in space.";
+    homepage = "https://simplestation.org";
     license = licenses.mit;
     maintainers = [ maintainers.zumorica ];
     platforms = [ "x86_64-linux" ];

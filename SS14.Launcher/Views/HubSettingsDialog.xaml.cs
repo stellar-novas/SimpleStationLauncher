@@ -39,9 +39,19 @@ public partial class HubSettingsDialog : Window
 
     private void Cancel(object? sender, RoutedEventArgs args) => Close();
 
+    private void Reset(object? sender, RoutedEventArgs args)
+    {
+        _viewModel.Reset();
+        if (!Verify())
+        {
+            // Directly all hubs from data, something's gone wrong with the database
+            _viewModel.HardReset();
+        }
+    }
+
     private void HubTextChanged(object? sender, AvaloniaPropertyChangedEventArgs e) => Verify();
 
-    private void Verify()
+    private bool Verify()
     {
         var dupes = _viewModel.GetDupes();
 
@@ -69,5 +79,7 @@ public partial class HubSettingsDialog : Window
             Warning.Text = _loc.GetString("hub-settings-warning-duplicate");
         else
             Warning.Text = "";
+
+        return noDupes;
     }
 }

@@ -217,7 +217,7 @@ login-login-busy-logging-in = Вход…
 # Strings for the "login" view on login
 login-login-error-title = Не удалось войти
 # Strings for the general main window layout of the launcher
-main-window-title = Space Station 14 Launcher
+main-window-title = SimpleStation14 Launcher
 # Strings for the general main window layout of the launcher
 main-window-header-link-website = Веб-сайт
 # Strings for the general main window layout of the launcher

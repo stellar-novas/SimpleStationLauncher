@@ -268,7 +268,7 @@ main-window-out-of-date-exit = Wyjście
 # Strings for the general main window layout of the launcher
 main-window-header-link-website = Strona internetowa
 # Strings for the general main window layout of the launcher
-main-window-title = Program uruchamiający Space Station 14
+main-window-title = Program uruchamiający SimpleStation14
 # Strings for the "register confirmation" view on login
 login-confirmation-busy = Logowanie…
 # Strings for the "login" view on login
