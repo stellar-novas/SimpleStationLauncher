@@ -28,7 +28,7 @@ public class OptionsTabViewModel : MainWindowTabViewModel
     public bool DisableIncompatibleMacOS { get; }
 
 #if RELEASE
-        public bool HideDisableSigning => true;
+    public bool HideDisableSigning => true;
 #else
     public bool HideDisableSigning => false;
 #endif
@@ -81,6 +81,37 @@ public class OptionsTabViewModel : MainWindowTabViewModel
         set
         {
             Cfg.SetCVar(CVars.DisableSigning, value);
+            Cfg.CommitConfig();
+        }
+    }
+
+    public double UiScalingX
+    {
+        get => Cfg.GetCVar(CVars.UiScalingX);
+        set
+        {
+            Cfg.SetCVar(CVars.UiScalingX, value);
+            Cfg.CommitConfig();
+        }
+    }
+
+    public double UiScalingY
+    {
+        get => Cfg.GetCVar(CVars.UiScalingY);
+        set
+        {
+            Cfg.SetCVar(CVars.UiScalingY, value);
+            Cfg.CommitConfig();
+        }
+    }
+
+    public bool NotUiScalingLock => !UiScalingLock;
+    public bool UiScalingLock
+    {
+        get => Cfg.GetCVar(CVars.UiScalingLock);
+        set
+        {
+            Cfg.SetCVar(CVars.UiScalingLock, value);
             Cfg.CommitConfig();
         }
     }
