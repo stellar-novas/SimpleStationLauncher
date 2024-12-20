@@ -5,8 +5,12 @@ namespace SS14.Launcher;
 
 public static class ConfigConstants
 {
-    public const string CurrentLauncherVersion = "51";
-    public static readonly bool DoVersionCheck = true;
+    public const string CurrentLauncherVersion = "1.0.2";
+    #if RELEASE
+    public const bool DoVersionCheck = true;
+    #else
+    public const bool DoVersionCheck = false;
+    #endif
 
     // Refresh login tokens if they're within <this much> of expiry.
     public static readonly TimeSpan TokenRefreshThreshold = TimeSpan.FromDays(15);
@@ -50,8 +54,7 @@ public static class ConfigConstants
     ]);
 
     private static readonly UrlFallbackSet LauncherDataBaseUrl = new([
-        "https://launcher-data.cdn.spacestation14.com/",
-        "https://launcher-data.fallback.cdn.spacestation14.com/",
+        "http://assets.simplestation.org/launcher/",
     ]);
 
     public static readonly UrlFallbackSet RobustBuildsManifest = RobustBuildsBaseUrl + "manifest.json";

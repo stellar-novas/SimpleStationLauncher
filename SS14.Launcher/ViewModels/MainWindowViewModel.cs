@@ -172,9 +172,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IErrorOverlayOwner
     {
         // await Task.Delay(1000);
         if (!ConfigConstants.DoVersionCheck)
-        {
             return;
-        }
 
         await _infoManager.LoadTask;
         if (_infoManager.Model == null)
