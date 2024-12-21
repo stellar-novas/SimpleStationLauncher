@@ -218,7 +218,8 @@ public class Connector : ReactiveObject
         Status = ConnectionStatus.ClientExited;
     }
 
-    private async Task<Process?> ConnectLaunchClient(ContentLaunchInfo launchInfo,
+    private async Task<Process?> ConnectLaunchClient(
+        ContentLaunchInfo launchInfo,
         ServerInfo? info,
         ServerBuildInformation? serverBuildInformation,
         Uri? connectAddress,
@@ -297,7 +298,7 @@ public class Connector : ReactiveObject
             }
 
             // Launch client.
-            return await LaunchClient(launchInfo, args, cVars);
+            return await LaunchClient(launchInfo, serverBuildInformation?.Engine ?? "Robust", args, cVars);
         }
         catch (Exception e)
         {
@@ -335,7 +336,7 @@ public class Connector : ReactiveObject
         // Must have been set when retrieving build info (inferred to be automatic zipping).
         Debug.Assert(info.BuildInformation != null, "info.BuildInformation != null");
 
-        var installation = await _updater.RunUpdateForLaunchAsync(info.BuildInformation, cancel);
+        var installation = await _updater.RunUpdateForLaunchAsync(info.BuildInformation, info.Engine, cancel);
         if (installation == null)
         {
             throw new ConnectException(ConnectionStatus.UpdateError);
@@ -410,11 +411,15 @@ public class Connector : ReactiveObject
 
     private async Task<Process?> LaunchClient(
         ContentLaunchInfo launchInfo,
+        string engine,
         IEnumerable<string> extraArgs,
         List<(string, string)> env)
     {
+        Log.Error("Launching client with engine {Engine}", engine);
+        Log.Fatal(string.Join(", ", launchInfo.ModuleInfo));
+
         var pubKey = LauncherPaths.PathPublicKey;
-        var engineVersion = launchInfo.ModuleInfo.Single(x => x.Module == "Robust").Version;
+        var engineVersion = launchInfo.ModuleInfo.Single(x => x.Module == engine).Version;
         var binPath = _engineManager.GetEnginePath(engineVersion);
         var sig = _engineManager.GetEngineSignature(engineVersion);
 
@@ -433,17 +438,15 @@ public class Connector : ReactiveObject
         EnvVar("SS14_LOADER_CONTENT_VERSION", launchInfo.Version.ToString());
 
         // Env vars for engine modules.
+        foreach (var (moduleName, moduleVersion) in launchInfo.ModuleInfo)
         {
-            foreach (var (moduleName, moduleVersion) in launchInfo.ModuleInfo)
-            {
-                if (moduleName == "Robust")
-                    continue;
+            if (moduleName == engine)
+                continue;
 
-                var modulePath = _engineManager.GetEngineModule(moduleName, moduleVersion);
+            var modulePath = _engineManager.GetEngineModule(moduleName, moduleVersion);
 
-                var envVar = $"ROBUST_MODULE_{moduleName.ToUpperInvariant().Replace('.', '_')}";
-                EnvVar(envVar, modulePath);
-            }
+            var envVar = $"ROBUST_MODULE_{moduleName.ToUpperInvariant().Replace('.', '_')}";
+            EnvVar(envVar, modulePath);
         }
 
         if (_cfg.GetCVar(CVars.DisableSigning))
@@ -696,7 +699,8 @@ public class Connector : ReactiveObject
 public sealed record ContentBundleMetadata(
     [property: JsonPropertyName("server_gc")] bool? ServerGC,
     [property: JsonPropertyName("engine_version")] string EngineVersion,
-    [property: JsonPropertyName("base_build")] ContentBundleBaseBuild? BaseBuild
+    [property: JsonPropertyName("base_build")] ContentBundleBaseBuild? BaseBuild,
+    [property: JsonPropertyName("engine")] string Engine = "Robust"
 );
 
 public sealed record ContentBundleBaseBuild(

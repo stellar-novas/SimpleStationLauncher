@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
+using SS14.Launcher.Utility;
 
 namespace SS14.Launcher.Models.EngineManager;
 
@@ -16,7 +17,7 @@ public sealed partial class EngineManagerDynamic
     private readonly SemaphoreSlim _manifestSemaphore = new(1);
     private readonly Stopwatch _manifestStopwatch = Stopwatch.StartNew();
 
-    private Dictionary<string, VersionInfo>? _cachedRobustVersionInfo;
+    private readonly Dictionary<string, Dictionary<string, VersionInfo>?> _cachedEngineVersionInfo = new();
     private TimeSpan _robustCacheValidUntil;
 
     /// <summary>
@@ -31,13 +32,14 @@ public sealed partial class EngineManagerDynamic
     /// </returns>
     private async ValueTask<FoundVersionInfo?> GetVersionInfo(
         string version,
+        string engine,
         bool followRedirects = true,
         CancellationToken cancel = default)
     {
         await _manifestSemaphore.WaitAsync(cancel);
         try
         {
-            return await GetVersionInfoCore(version, followRedirects, cancel);
+            return await GetVersionInfoCore(version, followRedirects, cancel, engine);
         }
         finally
         {
@@ -48,51 +50,61 @@ public sealed partial class EngineManagerDynamic
     private async ValueTask<FoundVersionInfo?> GetVersionInfoCore(
         string version,
         bool followRedirects,
-        CancellationToken cancel)
+        CancellationToken cancel,
+        string engine)
     {
-        // If we have a cached copy, and it's not expired, we check it.
-        if (_cachedRobustVersionInfo != null && _robustCacheValidUntil > _manifestStopwatch.Elapsed)
-        {
-            // Check the version. If this fails, we immediately re-request the manifest as it may have changed.
-            // (Connecting to a freshly-updated server with a new Robust version, within the cache window.)
-            if (FindVersionInfoInCached(version, followRedirects) is { } foundVersionInfo)
-                return foundVersionInfo;
-        }
+        // First, check if we have a cached copy of the manifest.
+        if (_cachedEngineVersionInfo.TryGetValue(engine, out var versionInfo) && versionInfo != null)
+            return FindVersionInfoInCached(version, followRedirects, engine);
 
-        await UpdateBuildManifest(cancel);
+        if (_robustCacheValidUntil >= _manifestStopwatch.Elapsed)
+            return null;
 
-        return FindVersionInfoInCached(version, followRedirects);
+        // If we don't have a cached copy, or it's expired, we re-request the manifest.
+        await UpdateBuildManifest(cancel, engine);
+        return FindVersionInfoInCached(version, followRedirects, engine);
+
     }
 
-    private async Task UpdateBuildManifest(CancellationToken cancel)
+    private async Task UpdateBuildManifest(CancellationToken cancel, string name)
     {
         // TODO: If-Modified-Since and If-None-Match request conditions.
 
-        Log.Debug("Loading manifest from {manifestUrl}...", ConfigConstants.RobustBuildsManifest);
-        _cachedRobustVersionInfo =
-            await ConfigConstants.RobustBuildsManifest.GetFromJsonAsync<Dictionary<string, VersionInfo>>(
-                _http, cancel);
+        if (ConfigConstants.EngineBuildsUrl.TryGetValue(name, out var urlSet))
+            foreach (var url in urlSet.Urls)
+            {
+                try
+                {
+                    _cachedEngineVersionInfo.Remove(name);
+                    _cachedEngineVersionInfo.Add(name, await new UrlFallbackSet([url]).GetFromJsonAsync<Dictionary<string, VersionInfo>>(_http, cancel));
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Failed to download manifest from {url}", url);
+                }
+            }
 
         _robustCacheValidUntil = _manifestStopwatch.Elapsed + ConfigConstants.RobustManifestCacheTime;
     }
 
-    private FoundVersionInfo? FindVersionInfoInCached(string version, bool followRedirects)
+    private FoundVersionInfo? FindVersionInfoInCached(string version, bool followRedirects, string name)
     {
-        Debug.Assert(_cachedRobustVersionInfo != null);
-
-        if (!_cachedRobustVersionInfo.TryGetValue(version, out var versionInfo))
+        if (!_cachedEngineVersionInfo.TryGetValue(name, out var versionInfo))
+            Debug.Assert(false);
+        if (versionInfo == null || !versionInfo.TryGetValue(version, out var info))
             return null;
 
         if (followRedirects)
         {
-            while (versionInfo.RedirectVersion != null)
+            while (info.RedirectVersion != null)
             {
-                version = versionInfo.RedirectVersion;
-                versionInfo = _cachedRobustVersionInfo[versionInfo.RedirectVersion];
+                if (!versionInfo.TryGetValue(info.RedirectVersion, out info))
+                    return null;
             }
         }
 
-        return new FoundVersionInfo(version, versionInfo);
+        return new FoundVersionInfo(version, info);
     }
 
     private sealed record FoundVersionInfo(string Version, VersionInfo Info);
