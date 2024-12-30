@@ -25,14 +25,8 @@ public sealed partial class EngineManagerDynamic : IEngineManager
 {
     public const string OverrideVersionName = "_OVERRIDE_";
 
-    private readonly DataManager _cfg;
-    private readonly HttpClient _http;
-
-    public EngineManagerDynamic()
-    {
-        _cfg = Locator.Current.GetRequiredService<DataManager>();
-        _http = Locator.Current.GetRequiredService<HttpClient>();
-    }
+    private readonly DataManager _cfg = Locator.Current.GetRequiredService<DataManager>();
+    private readonly HttpClient _http = Locator.Current.GetRequiredService<HttpClient>();
 
     public string GetEnginePath(string engineVersion)
     {
@@ -72,7 +66,8 @@ public sealed partial class EngineManagerDynamic : IEngineManager
     }
 
     public async Task<EngineInstallationResult> DownloadEngineIfNecessary(
-        string engineVersion,
+        string version,
+        string engine,
         Helpers.DownloadProgressCallback? progress = null,
         CancellationToken cancel = default)
     {
@@ -81,21 +76,18 @@ public sealed partial class EngineManagerDynamic : IEngineManager
         {
             // Engine override means we don't need to download anything, we have it locally!
             // At least, if we don't, we'll just blame the developer that enabled it.
-            return new EngineInstallationResult(engineVersion, false);
+            return new EngineInstallationResult(version, false);
         }
 #endif
 
-        var foundVersion = await GetVersionInfo(engineVersion, cancel: cancel);
+        var foundVersion = await GetVersionInfo(version, engine, true, cancel);
         if (foundVersion == null)
             throw new UpdateException("Unable to find engine version in manifest!");
 
         if (foundVersion.Info.Insecure)
             throw new UpdateException("Specified engine version is insecure!");
 
-        Log.Debug(
-            "Requested engine version was {RequestedEngien}, redirected to {FoundVersion}",
-            engineVersion,
-            foundVersion.Version);
+        Log.Debug($"Requested engine version was {version}, redirected to {foundVersion.Version}");
 
         if (_cfg.EngineInstallations.Lookup(foundVersion.Version).HasValue)
         {
@@ -203,7 +195,7 @@ public sealed partial class EngineManagerDynamic : IEngineManager
             // Verify signature.
             tempFile.Seek(0, SeekOrigin.Begin);
 
-            if (!VerifyModuleSignature(tempFile, platformData.Sig))
+            if (!VerifyModuleSignature(tempFile, moduleName, platformData.Sig))
             {
 #if DEBUG
                 if (_cfg.GetCVar(CVars.DisableSigning))
@@ -291,7 +283,7 @@ public sealed partial class EngineManagerDynamic : IEngineManager
         }
     }
 
-    private static unsafe bool VerifyModuleSignature(FileStream stream, string signature)
+    private static unsafe bool VerifyModuleSignature(FileStream stream, string module, string signature)
     {
         if (stream.Length > int.MaxValue)
             throw new InvalidOperationException("Unable to handle files larger than 2 GiB");
@@ -315,7 +307,7 @@ public sealed partial class EngineManagerDynamic : IEngineManager
 
             var pubKey = PublicKey.Import(
                 SignatureAlgorithm.Ed25519,
-                File.ReadAllBytes(LauncherPaths.PathPublicKey),
+                File.ReadAllBytes(LauncherPaths.PathPublicKeys!.GetValueOrDefault(module, null) ?? LauncherPaths.PathPublicKey),
                 KeyBlobFormat.PkixPublicKeyText);
 
             var sigBytes = Convert.FromHexString(signature);
@@ -328,10 +320,15 @@ public sealed partial class EngineManagerDynamic : IEngineManager
         }
     }
 
-    public async Task<EngineModuleManifest> GetEngineModuleManifest(CancellationToken cancel = default)
+    public async Task<EngineModuleManifest> GetEngineModuleManifest(string engine, CancellationToken cancel = default)
     {
-        return await ConfigConstants.RobustModulesManifest.GetFromJsonAsync<EngineModuleManifest>(_http, cancel) ??
-               throw new InvalidDataException();
+        if (!ConfigConstants.EngineBuildsUrl.TryGetValue(engine, out var urls))
+            throw new InvalidOperationException("No manifest URL for engine module");
+
+        if (await urls.GetFromJsonAsync<EngineModuleManifest>(_http, cancel) is { } manifest)
+            return manifest;
+
+        throw new InvalidOperationException("Failed to download engine module manifest");
     }
 
     public async Task DoEngineCullMaybeAsync(SqliteConnection contenCon)
@@ -350,7 +347,7 @@ public sealed partial class EngineManagerDynamic : IEngineManager
         var modulesUsed = new HashSet<(string, string)>();
         foreach (var (name, version) in origModulesUsed)
         {
-            if (name == "Robust" && await GetVersionInfo(version) is { } redirect)
+            if (name == "Robust" && await GetVersionInfo(version, name) is { } redirect)
             {
                 modulesUsed.Add(("Robust", redirect.Version));
             }
@@ -360,7 +357,7 @@ public sealed partial class EngineManagerDynamic : IEngineManager
             }
         }
 
-        var toCull = _cfg.EngineInstallations.Items.Where(i => !modulesUsed.Contains(("Robust", i.Version))).ToArray();
+        var toCull = _cfg.EngineInstallations.Items.Where(i => !modulesUsed.Any(m => m.Item2 == i.Version)).ToArray();
 
         foreach (var installation in toCull)
         {

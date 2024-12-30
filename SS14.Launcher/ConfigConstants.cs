@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SS14.Launcher.Utility;
 
 namespace SS14.Launcher;
@@ -48,17 +49,45 @@ public static class ConfigConstants
     public const string NewsFeedUrl = "https://spacestation14.com/post/index.xml";
     public const string TranslateUrl = "https://docs.spacestation14.com/en/general-development/contributing-translations.html";
 
-    private static readonly UrlFallbackSet RobustBuildsBaseUrl = new([
-        "https://robust-builds.cdn.spacestation14.com/",
-        "https://robust-builds.fallback.cdn.spacestation14.com/",
-    ]);
+    public static readonly Dictionary<string, UrlFallbackSet> EngineBuildsUrl = new()
+    {
+        {
+            "Robust",
+            new UrlFallbackSet([
+                "https://robust-builds.cdn.spacestation14.com/manifest.json",
+                "https://robust-builds.fallback.cdn.spacestation14.com/manifest.json",
+            ])
+        },
+        {
+            "Multiverse",
+            new UrlFallbackSet([
+                "https://cdn.spacestationmultiverse.com/ssmv-engine-manifest",
+            ])
+        },
+    };
+
+    public static readonly Dictionary<string, UrlFallbackSet> EngineModulesUrl = new()
+    {
+        {
+            "Robust",
+            new UrlFallbackSet([
+                "https://robust-builds.cdn.spacestation14.com/modules.json",
+                "https://robust-builds.fallback.cdn.spacestation14.com/modules.json",
+            ])
+        },
+        {
+            "Multiverse",
+            new UrlFallbackSet([
+                // Same as Robust for now
+                "https://robust-builds.cdn.spacestation14.com/modules.json",
+                "https://robust-builds.fallback.cdn.spacestation14.com/modules.json",
+            ])
+        },
+    };
 
     private static readonly UrlFallbackSet LauncherDataBaseUrl = new([
         "http://assets.simplestation.org/launcher/",
     ]);
-
-    public static readonly UrlFallbackSet RobustBuildsManifest = RobustBuildsBaseUrl + "manifest.json";
-    public static readonly UrlFallbackSet RobustModulesManifest = RobustBuildsBaseUrl + "modules.json";
 
     // How long to keep cached copies of Robust manifests.
     // TODO: Take this from Cache-Control header responses instead.

@@ -17,10 +17,11 @@ public interface IEngineManager
     string GetEnginePath(string engineVersion);
     string GetEngineSignature(string engineVersion);
 
-    Task<EngineModuleManifest> GetEngineModuleManifest(CancellationToken cancel = default);
+    Task<EngineModuleManifest> GetEngineModuleManifest(string engine, CancellationToken cancel = default);
 
     Task<EngineInstallationResult> DownloadEngineIfNecessary(
-        string engineVersion,
+        string version,
+        string engine,
         Helpers.DownloadProgressCallback? progress = null,
         CancellationToken cancel = default);
 
