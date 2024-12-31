@@ -10,7 +10,9 @@ account-drop-down-add-account = Add account
 
 ## Localization for the "add favorite server" dialog window
 
-add-favorite-window-title = Add Favorite Server
+add-favorite-window-title = Favorite Server
+add-favorite-window-fetch-button = Get name from server
+add-favorite-window-submit-button = Confirm
 add-favorite-window-address-invalid = Address is invalid
 add-favorite-window-label-name = Name:
 add-favorite-window-label-address = Address:
@@ -261,6 +263,7 @@ filters-rp-high-desc = High
 ## Strings for entries in the server list (including home page)
 
 server-entry-connect = Connect
+server-entry-update-info = Edit
 server-entry-add-favorite = Add Favorite
 server-entry-remove-favorite = Remove Favorite
 server-entry-offline = OFFLINE
@@ -275,7 +278,8 @@ server-entry-description-fetching = Fetching server status…
 server-entry-description-error = Error while fetching server description
 server-entry-description-none = No server description provided
 server-fetched-from-hub = Fetched from { $hub }
-server-entry-raise = Raise to top
+server-entry-raise = Raise
+server-entry-lower = Lower
 
 ## Strings for the "Development" tab
 ## These aren't shown to users so they're not very important

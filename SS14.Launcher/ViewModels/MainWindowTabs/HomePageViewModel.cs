@@ -32,21 +32,17 @@ public class HomePageViewModel : MainWindowTabViewModel
 
         _cfg.FavoriteServers
             .Connect()
-            .Select(x => new ServerEntryViewModel(MainWindowViewModel, _statusCache.GetStatusFor(x.Address), x, _statusCache, _cfg) { ViewedInFavoritesPane = true })
+            .Select(x =>
+                new ServerEntryViewModel(MainWindowViewModel, _statusCache.GetStatusFor(x.Address), x, _statusCache, _cfg)
+                    { ViewedInFavoritesPane = true, IsExpanded = _cfg.ExpandedServers.Contains(x.Address) })
             .OnItemAdded(a =>
             {
-                if (IsSelected)
-                {
-                    _statusCache.InitialUpdateStatus(a.CacheData);
-                }
+                if (IsSelected) _statusCache.InitialUpdateStatus(a.CacheData);
             })
-            .Sort(Comparer<ServerEntryViewModel>.Create((a, b) => {
-                var dc = a.Favorite!.RaiseTime.CompareTo(b.Favorite!.RaiseTime);
-                if (dc != 0)
-                {
-                    return -dc;
-                }
-                return string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase);
+            .Sort(Comparer<ServerEntryViewModel>.Create((a, b) =>
+            {
+                var dc = a.Favorite!.Position.CompareTo(b.Favorite!.Position);
+                return dc != 0 ? -dc : string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase);
             }))
             .Bind(out var favorites)
             .Subscribe(_ =>

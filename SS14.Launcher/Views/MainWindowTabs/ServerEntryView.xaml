@@ -56,16 +56,26 @@
           </ItemsControl>
 
           <DockPanel Dock="Right">
-            <!-- Favorite add/remove button -->
-            <Button Classes="OpenRight"
-                    Content="{Binding FavoriteButtonText}"
-                    Command="{Binding FavoriteButtonPressed}" />
-
-            <!-- Raise to top button. -->
+            <!-- Edit server info button -->
             <Button IsVisible="{Binding ViewedInFavoritesPane}"
-                    Classes="OpenLeft"
+                    Classes="OpenRight"
+                    Content="{loc:Loc server-entry-update-info}"
+                    Command="{Binding UpdateFavoriteInfo}" />
+
+            <!-- Order buttons -->
+            <Button IsVisible="{Binding ViewedInFavoritesPane}"
+                    Classes="OpenBoth"
                     Content="{loc:Loc server-entry-raise}"
                     Command="{Binding FavoriteRaiseButtonPressed}" />
+            <Button IsVisible="{Binding ViewedInFavoritesPane}"
+                    Classes="OpenBoth"
+                    Content="{loc:Loc server-entry-lower}"
+                    Command="{Binding FavoriteLowerButtonPressed}" />
+
+            <!-- Favorite add/remove button -->
+            <Button Classes="OpenLeft"
+                    Content="{Binding FavoriteButtonText}"
+                    Command="{Binding FavoriteButtonPressed}" />
           </DockPanel>
         </views:RowSideAlignedPanel>
       </DockPanel>

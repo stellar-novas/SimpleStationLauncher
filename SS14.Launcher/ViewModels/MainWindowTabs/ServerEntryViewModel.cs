@@ -1,10 +1,13 @@
 using System;
 using System.ComponentModel;
+using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Messaging;
 using SS14.Launcher.Localization;
 using SS14.Launcher.Models.Data;
 using SS14.Launcher.Models.ServerStatus;
+using SS14.Launcher.Views;
 using static SS14.Launcher.Utility.HubUtility;
 
 namespace SS14.Launcher.ViewModels.MainWindowTabs;
@@ -166,10 +169,15 @@ public sealed class ServerEntryViewModel : ObservableRecipient, IRecipient<Favor
     public void FavoriteRaiseButtonPressed()
     {
         if (IsFavorite)
-        {
-            // Usual business, raise priority
-            _cfg.RaiseFavoriteServer(_cfg.FavoriteServers.Lookup(Address).Value);
-        }
+            _cfg.ReorderFavoriteServer(_cfg.FavoriteServers.Lookup(Address).Value, 1);
+
+        _cfg.CommitConfig();
+    }
+
+    public void FavoriteLowerButtonPressed()
+    {
+        if (IsFavorite)
+            _cfg.ReorderFavoriteServer(_cfg.FavoriteServers.Lookup(Address).Value, -1);
 
         _cfg.CommitConfig();
     }
@@ -228,6 +236,28 @@ public sealed class ServerEntryViewModel : ObservableRecipient, IRecipient<Favor
             case nameof(IServerStatusData.StatusInfo):
                 OnPropertyChanged(nameof(Description));
                 break;
+        }
+    }
+
+    public async void UpdateFavoriteInfo()
+    {
+        if (Favorite == null
+            || _windowVm.Control?.GetVisualRoot() is not Window window)
+            return;
+
+        var (name, address) = await new AddFavoriteDialog(Favorite.Name ?? "", Favorite.Address).ShowDialog<(string name, string address)>(window);
+
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(address))
+            return;
+
+        try
+        {
+            _cfg.EditFavoriteServer(new(Name, Address), address, name);
+            _cfg.CommitConfig();
+        }
+        catch (ArgumentException)
+        {
+            // Ignored
         }
     }
 }
