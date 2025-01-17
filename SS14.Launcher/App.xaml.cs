@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.IO;
 using Avalonia;
 using Avalonia.Controls;
@@ -7,8 +9,11 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using JetBrains.Annotations;
+using Microsoft.Win32;
 using Serilog;
 using SS14.Launcher.Models.OverrideAssets;
+using static System.Diagnostics.Process;
+using static System.Environment.SpecialFolder;
 
 namespace SS14.Launcher;
 
@@ -44,6 +49,8 @@ public class App : Application
         IconsLoader.Load(this);
 
         _overrideAssets.AssetsChanged += OnAssetsChanged;
+
+        RegisterProtocol();
     }
 
     private void LoadBaseAssets()
@@ -91,6 +98,77 @@ public class App : Application
             AssetType.WindowIcon => new WindowIcon(data),
             _ => throw new ArgumentOutOfRangeException()
         };
+    }
+
+    private void RegisterProtocol()
+    {
+        List<string> protocols = new() { "ss14", "ss14s" };
+
+        #if WINDOWS
+        Log.Information("Registering SS14 protocol handler for Windows");
+        foreach (var protocol in protocols)
+        {
+            var key = Registry.CurrentUser.CreateSubKey($@"SOFTWARE\Classes\{protocol}");
+            key.SetValue(string.Empty, $"URL: {protocol}");
+            key.SetValue("URL Protocol", string.Empty);
+
+            key = key.CreateSubKey(@"shell\open\command");
+            key.SetValue(string.Empty, $"\"{Environment.ProcessPath}\" \"%1\"");
+            key.Close();
+        }
+        #elif MACOS
+        Log.Information("Registration of SS14 protocol handler for MacOS isn't implemented, who uses that anyway?");
+        #elif LINUX
+        Log.Information("Registering SS14 protocol handler for Linux");
+        foreach (var protocol in protocols)
+        {
+            try
+            {
+                // Put it in XDG_DATA_HOME/applications or ~/.local/share/applications
+                var desktopFile = Path.Combine(
+                    Environment.GetEnvironmentVariable("XDG_DATA_HOME")
+                        ?? Path.Combine(Environment.GetFolderPath(UserProfile), ".local", "share"),
+                    "applications", $"ss14-{protocol}.desktop");
+                if (File.Exists(desktopFile))
+                    #if DEBUG
+                        File.WriteAllText(desktopFile, string.Empty);
+                    #else
+                        Log.Information($"SS14 protocol handler desktop file for Linux already exists at {desktopFile}, skipping");
+                        continue;
+                    #endif
+
+                using var writer = new StreamWriter(File.OpenWrite(desktopFile));
+                writer.WriteLine("[Desktop Entry]");
+                writer.WriteLine("Type=Application");
+                writer.WriteLine($"Name=SS14 {protocol}");
+                writer.WriteLine($"Exec=\"{Environment.ProcessPath}\" %u");
+                writer.WriteLine("Terminal=false");
+                writer.WriteLine($"MimeType=x-scheme-handler/{protocol};");
+                writer.WriteLine("Categories=Network;");
+                writer.Close();
+
+                Log.Information($"Created SS14 protocol handler desktop file for Linux at {desktopFile}");
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Failed to create SS14 protocol handler desktop file for Linux");
+            }
+
+            try
+            {
+                Start("xdg-mime", $"default ss14-{protocol}.desktop x-scheme-handler/{protocol}");
+                Start("update-desktop-database", "~/.local/share/applications");
+
+                Log.Information("Updated SS14 protocol handler registry for Linux");
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Failed to update SS14 protocol handler registry for Linux");
+            }
+        }
+        #else
+        Log.Warning("Unknown OS, not registering SS14 protocol handler");
+        #endif
     }
 
     private sealed record AssetDef(string DefaultPath, AssetType Type);
